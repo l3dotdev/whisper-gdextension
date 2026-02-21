@@ -1,0 +1,14 @@
+__pycache__/
+/bin/**
+.sconsign.dblite
+
+project/addons/whisper.cpp/bin/**
+project/models/**
+
+src/gen/**
+
+*.os
+compile_commands.json
+
+# ignore my local symlink
+godot-cpp
