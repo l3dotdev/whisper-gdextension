@@ -7,7 +7,7 @@ on:
 
 jobs:
     build:
-        runs-on: blacksmith-4vcpu-windows-2025
+        runs-on: windows-latest #blacksmith-4vcpu-windows-2025
         strategy:
             fail-fast: false
             matrix:
