@@ -3,8 +3,7 @@ __pycache__/
 .sconsign.dblite
 *.pdb
 
-project/addons/whisper.cpp/bin/**
-project/models/**
+addon/bin/**
 
 src/gen/**
 
