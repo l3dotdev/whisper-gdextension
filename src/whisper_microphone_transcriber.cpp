@@ -151,9 +151,9 @@ void WhisperMicrophoneTranscriber::_setup_audio_bus() {
 		int effect_count = audio_server->get_bus_effect_count(bus_index);
 		Ref<AudioEffect> last_effect = audio_server->get_bus_effect(bus_index, effect_count - 1);
 
-		godot::String last_effect_class = last_effect.get_class_static();
-		if (last_effect_class != "AudioEffectCapture") {
-			ERR_PRINT("[WhisperMicrophoneTranscriber] last bus effect on custom bus must be an AudioEffectCapture effect, found " + last_effect_class);
+		Ref<AudioEffectCapture> capture_effect = Ref<AudioEffectCapture>(last_effect);
+		if (last_effect.is_null() || !capture_effect.is_valid()) {
+			ERR_PRINT("[WhisperMicrophoneTranscriber] last bus effect on custom bus must be an AudioEffectCapture effect");
 		}
 
 		audio_effect = last_effect;
