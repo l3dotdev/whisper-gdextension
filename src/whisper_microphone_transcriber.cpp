@@ -34,13 +34,15 @@ void WhisperMicrophoneTranscriber::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_keep_ms", "keep_ms"), &WhisperMicrophoneTranscriber::set_keep_ms);
 	ClassDB::bind_method(D_METHOD("get_keep_ms"), &WhisperMicrophoneTranscriber::get_keep_ms);
 
-	ClassDB::bind_method(D_METHOD("reset_bus_name"), &WhisperMicrophoneTranscriber::reset_bus_name);
 	ClassDB::bind_method(D_METHOD("set_bus_name", "bus_name"), &WhisperMicrophoneTranscriber::set_bus_name);
 	ClassDB::bind_method(D_METHOD("get_bus_name"), &WhisperMicrophoneTranscriber::get_bus_name);
 
 	ClassDB::bind_method(D_METHOD("start"), &WhisperMicrophoneTranscriber::start);
 	ClassDB::bind_method(D_METHOD("stop"), &WhisperMicrophoneTranscriber::stop);
 	ClassDB::bind_method(D_METHOD("is_running"), &WhisperMicrophoneTranscriber::is_running);
+
+	ClassDB::bind_method(D_METHOD("reset_bus_name"), &WhisperMicrophoneTranscriber::reset_bus_name);
+	ClassDB::bind_method(D_METHOD("clear_buffers"), &WhisperMicrophoneTranscriber::clear_buffers);
 
 	ClassDB::bind_method(D_METHOD("push_audio_chunk", "samples"), &WhisperMicrophoneTranscriber::push_audio_chunk);
 
@@ -109,15 +111,6 @@ int WhisperMicrophoneTranscriber::get_keep_ms() const {
 	return keep_ms;
 }
 
-void WhisperMicrophoneTranscriber::reset_bus_name() {
-	if (running.is_set()) {
-		ERR_PRINT("[WhisperMicrophoneTranscriber] cannot change bus name while running");
-		return;
-	}
-	bus_name = "WhisperMicCapture_" + String::num_int64((int64_t)this);
-	use_custom_bus = false;
-}
-
 void WhisperMicrophoneTranscriber::set_bus_name(const String &p_bus_name) {
 	if (running.is_set()) {
 		ERR_PRINT("[WhisperMicrophoneTranscriber] cannot change bus name while running");
@@ -158,8 +151,9 @@ void WhisperMicrophoneTranscriber::_setup_audio_bus() {
 		int effect_count = audio_server->get_bus_effect_count(bus_index);
 		Ref<AudioEffect> last_effect = audio_server->get_bus_effect(bus_index, effect_count - 1);
 
-		if (last_effect.get_class_static() != "AudioEffectCapture") {
-			ERR_PRINT("[WhisperMicrophoneTranscriber] last bus effect on custom bus must be an AudioEffectCapture effect");
+		godot::String last_effect_class = last_effect.get_class_static();
+		if (last_effect_class != "AudioEffectCapture") {
+			ERR_PRINT("[WhisperMicrophoneTranscriber] last bus effect on custom bus must be an AudioEffectCapture effect, found " + last_effect_class);
 		}
 
 		audio_effect = last_effect;
@@ -277,6 +271,32 @@ void WhisperMicrophoneTranscriber::stop() {
 
 bool WhisperMicrophoneTranscriber::is_running() const {
 	return running.is_set();
+}
+
+void WhisperMicrophoneTranscriber::reset_bus_name() {
+	if (running.is_set()) {
+		ERR_PRINT("[WhisperMicrophoneTranscriber] cannot change bus name while running");
+		return;
+	}
+	bus_name = "WhisperMicCapture_" + String::num_int64((int64_t)this);
+	use_custom_bus = false;
+}
+
+void WhisperMicrophoneTranscriber::clear_buffers() {
+	{
+		mtx->lock();
+
+		pcmf32_buffer.clear();
+		pcmf32_old.clear();
+		pending_texts.clear();
+		pending_segments.clear();
+		mtx->unlock();
+	}
+
+	if (audio_effect.is_valid())
+	{
+		audio_effect->clear_buffer();
+	}
 }
 
 /* --- manual audio input --- */

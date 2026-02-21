@@ -89,7 +89,9 @@ public:
 	bool start();
 	void stop();
 	bool is_running() const;
+
 	void reset_bus_name();
+	void clear_buffers();
 	
 	// manual audio input (alternative to microphone)
 	void push_audio_chunk(const PackedFloat32Array &p_samples);
