@@ -34,6 +34,10 @@ void WhisperMicrophoneTranscriber::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_keep_ms", "keep_ms"), &WhisperMicrophoneTranscriber::set_keep_ms);
 	ClassDB::bind_method(D_METHOD("get_keep_ms"), &WhisperMicrophoneTranscriber::get_keep_ms);
 
+	ClassDB::bind_method(D_METHOD("reset_bus_name", "keep_ms"), &WhisperMicrophoneTranscriber::reset_bus_name);
+	ClassDB::bind_method(D_METHOD("set_bus_name", "bus_name"), &WhisperMicrophoneTranscriber::set_bus_name);
+	ClassDB::bind_method(D_METHOD("get_bus_name"), &WhisperMicrophoneTranscriber::get_bus_name);
+
 	ClassDB::bind_method(D_METHOD("start"), &WhisperMicrophoneTranscriber::start);
 	ClassDB::bind_method(D_METHOD("stop"), &WhisperMicrophoneTranscriber::stop);
 	ClassDB::bind_method(D_METHOD("is_running"), &WhisperMicrophoneTranscriber::is_running);
@@ -47,6 +51,7 @@ void WhisperMicrophoneTranscriber::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "step_ms", PROPERTY_HINT_RANGE, "500,10000,100"), "set_step_ms", "get_step_ms");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "length_ms", PROPERTY_HINT_RANGE, "1000,30000,100"), "set_length_ms", "get_length_ms");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "keep_ms", PROPERTY_HINT_RANGE, "0,2000,50"), "set_keep_ms", "get_keep_ms");
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "bus_name", PROPERTY_HINT_NONE, "The name of the audio bus used for transcription"), "set_bus_name", "get_bus_name");
 
 	ADD_SIGNAL(MethodInfo("transcription_text", PropertyInfo(Variant::STRING, "text")));
 	ADD_SIGNAL(MethodInfo("transcription_segment", PropertyInfo(Variant::OBJECT, "segment", PROPERTY_HINT_RESOURCE_TYPE, "WhisperSegment")));
