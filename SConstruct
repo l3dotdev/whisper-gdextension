@@ -37,8 +37,15 @@ Help(opts.GenerateHelpText(localEnv))
 env = localEnv.Clone()
 
 if not (os.path.isdir("godot-cpp") and os.listdir("godot-cpp")):
-    print_error("""godot-cpp is not available within this folder, as Git submodules haven't been initialized.
+    print_error("""godot-cpp is not available within this folder.
 Run the following command to download godot-cpp:
+
+    git clone --depth 1 --branch 4.5 https://github.com/godotengine/godot-cpp.git godot-cpp""")
+    sys.exit(1)
+
+if not (os.path.isdir("thirdparty/whisper.cpp") and os.listdir("thirdparty/whisper.cpp")):
+    print_error("""whisper.cpp is not available within the thirdparty folder, as Git submodules haven't been initialized.
+Run the following command to download whisper.cpp:
 
     git submodule update --init --recursive""")
     sys.exit(1)
