@@ -30,6 +30,7 @@ class WhisperMicrophoneTranscriber : public Node {
 	AudioStreamPlayer *mic_player = nullptr;
 	int bus_index = -1;
 	String bus_name;
+	bool use_custom_bus = false;
 
 	// streaming parameters (similar to whisper.cpp stream example)
 	int step_ms = 3000;      // process audio every N milliseconds
@@ -58,6 +59,7 @@ class WhisperMicrophoneTranscriber : public Node {
 	void _thread_func();
 	void _process_audio();
 	void _setup_audio_bus();
+	void _setup_audio_stream();
 	void _cleanup_audio_bus();
 	void _emit_pending_results();
 
@@ -79,6 +81,10 @@ public:
 
 	void set_keep_ms(int p_keep_ms);
 	int get_keep_ms() const;
+
+	void reset_bus_name();
+	void set_bus_name(const String &p_bus_name);
+	String get_bus_name() const;
 
 	// control methods
 	bool start();

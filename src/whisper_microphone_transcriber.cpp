@@ -104,11 +104,62 @@ int WhisperMicrophoneTranscriber::get_keep_ms() const {
 	return keep_ms;
 }
 
+void WhisperMicrophoneTranscriber::reset_bus_name() {
+	if (running.is_set()) {
+		ERR_PRINT("[WhisperMicrophoneTranscriber] cannot change bus name while running");
+		return;
+	}
+	bus_name = "WhisperMicCapture_" + String::num_int64((int64_t)this);
+	use_custom_bus = false;
+}
+
+void WhisperMicrophoneTranscriber::set_bus_name(const String &p_bus_name) {
+	if (running.is_set()) {
+		ERR_PRINT("[WhisperMicrophoneTranscriber] cannot change bus name while running");
+		return;
+	}
+	bus_name = p_bus_name;
+	use_custom_bus = true;
+}
+
+String WhisperMicrophoneTranscriber::get_bus_name() const {
+	return bus_name;
+}
+
 /* --- audio bus setup --- */
+
+void WhisperMicrophoneTranscriber::_setup_audio_stream() {
+	_setup_audio_bus();
+
+	Ref<AudioStreamMicrophone> mic_stream;
+	mic_stream.instantiate();
+
+	// create AudioStreamPlayer with microphone input
+	mic_player = memnew(AudioStreamPlayer);
+	mic_player->set_stream(mic_stream);
+	mic_player->set_bus(bus_name);
+	mic_player->set_autoplay(true);
+	add_child(mic_player);
+}
 
 void WhisperMicrophoneTranscriber::_setup_audio_bus() {
 	AudioServer *audio_server = AudioServer::get_singleton();
 	if (!audio_server) {
+		return;
+	}
+
+	bus_index = audio_server->get_bus_index(bus_name);
+	if (bus_index >= 0) {
+		int effect_count = audio_server->get_bus_effect_count(bus_index);
+		Ref<AudioEffect> last_effect = audio_server->get_bus_effect(bus_index, effect_count - 1);
+
+		if (last_effect.get_class_static() != "AudioEffectCapture") {
+			ERR_PRINT("[WhisperMicrophoneTranscriber] last bus effect on custom bus must be an AudioEffectCapture effect");
+		}
+
+		audio_effect = last_effect;
+		audio_effect->set_buffer_length(float(length_ms) / 1000.0f + 1.0f);
+		
 		return;
 	}
 
@@ -122,15 +173,6 @@ void WhisperMicrophoneTranscriber::_setup_audio_bus() {
 	audio_effect.instantiate();
 	audio_effect->set_buffer_length(float(length_ms) / 1000.0f + 1.0f);
 	audio_server->add_bus_effect(bus_index, audio_effect);
-
-	// create AudioStreamPlayer with microphone input
-	mic_player = memnew(AudioStreamPlayer);
-	Ref<AudioStreamMicrophone> mic_stream;
-	mic_stream.instantiate();
-	mic_player->set_stream(mic_stream);
-	mic_player->set_bus(bus_name);
-	add_child(mic_player);
-	mic_player->play();
 }
 
 void WhisperMicrophoneTranscriber::_cleanup_audio_bus() {
@@ -140,17 +182,19 @@ void WhisperMicrophoneTranscriber::_cleanup_audio_bus() {
 		mic_player = nullptr;
 	}
 
-	AudioServer *audio_server = AudioServer::get_singleton();
-	if (audio_server && bus_index >= 0) {
-		// find and remove the bus by name (index might have changed)
-		int idx = audio_server->get_bus_index(bus_name);
-		if (idx >= 0) {
-			audio_server->remove_bus(idx);
+	if (!use_custom_bus) {
+		AudioServer *audio_server = AudioServer::get_singleton();
+		if (audio_server && bus_index >= 0) {
+			// find and remove the bus by name (index might have changed)
+			int idx = audio_server->get_bus_index(bus_name);
+			if (idx >= 0) {
+				audio_server->remove_bus(idx);
+			}
+			bus_index = -1;
 		}
-		bus_index = -1;
+		
+		audio_effect.unref();
 	}
-
-	audio_effect.unref();
 }
 
 /* --- control methods --- */
@@ -176,7 +220,7 @@ bool WhisperMicrophoneTranscriber::start() {
 	}
 
 	// setup audio capture
-	_setup_audio_bus();
+	_setup_audio_stream();
 
 	// clear buffers
 	{
