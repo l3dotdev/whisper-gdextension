@@ -8,6 +8,7 @@ project/models/**
 src/gen/**
 
 *.os
+*.obj
 compile_commands.json
 
 # ignore my local symlink/copy
