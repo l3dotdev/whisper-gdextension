@@ -1,3 +1,4 @@
+ignore = dirty
 [submodule "thirdparty/whisper"]
 	path = thirdparty/whisper
 	url = https://github.com/openai/whisper.git
