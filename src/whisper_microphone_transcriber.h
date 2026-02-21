@@ -1,6 +1,5 @@
 #pragma once
 
-#ifdef _GDEXTENSION
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/audio_effect_capture.hpp>
 #include <godot_cpp/classes/audio_stream_player.hpp>
@@ -14,18 +13,6 @@
 #include <godot_cpp/variant/packed_float32_array.hpp>
 #include <godot_cpp/variant/packed_vector2_array.hpp>
 using namespace godot;
-#else
-#include "scene/main/node.h"
-#include "servers/audio/effects/audio_effect_capture.h"
-#include "scene/audio/audio_stream_player.h"
-#include "servers/audio/audio_stream.h"
-#include "servers/audio_server.h"
-#include "core/os/os.h"
-#include "core/os/thread.h"
-#include "core/os/mutex.h"
-#include "core/os/semaphore.h"
-#include "core/templates/safe_refcount.h"
-#endif
 
 #include "whisper_full.h"
 
@@ -50,16 +37,9 @@ class WhisperMicrophoneTranscriber : public Node {
 	int keep_ms = 200;       // audio to keep from previous step (to avoid word boundary issues)
 
 	// threading
-#ifdef _GDEXTENSION
 	Ref<Thread> worker_thread;
 	Ref<Mutex> mtx;
 	Ref<Semaphore> sem;
-#else
-	Thread worker_thread;
-	Mutex mtx;
-	Semaphore sem;
-	static void _thread_callback(void *p_userdata);
-#endif
 	SafeFlag running;
 	SafeFlag should_stop;
 

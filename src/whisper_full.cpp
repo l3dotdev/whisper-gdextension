@@ -1,13 +1,9 @@
 #include "whisper_full.h"
 
-#ifdef _GDEXTENSION
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/classes/file_access.hpp>
 using namespace godot;
-#else
-#include "core/string/print_string.h"
-#endif
 
 #include <whisper.h>
 

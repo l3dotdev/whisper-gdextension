@@ -1,14 +1,10 @@
 #pragma once
 
-#ifdef _GDEXTENSION
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/variant/packed_float32_array.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/templates/local_vector.hpp>
 using namespace godot;
-#else
-#include "core/variant/typed_array.h"
-#endif
 
 #include <cfloat>
 

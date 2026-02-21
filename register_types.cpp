@@ -1,12 +1,10 @@
 #include "register_types.h"
 
-#ifdef _GDEXTENSION
 #include <gdextension_interface.h>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
 using namespace godot;
-#endif
 
 #include "src/library.h"
 
@@ -18,7 +16,6 @@ void GDXMOD_LIBRARY_UNINITIALIZE_NAME {
 	uninitialize_library(p_level);
 }
 
-#ifdef _GDEXTENSION
 extern "C"
 {
 	GDExtensionBool GDE_EXPORT library_init(GDExtensionInterfaceGetProcAddress p_get_proc_address, GDExtensionClassLibraryPtr p_library, GDExtensionInitialization *r_initialization)
@@ -31,4 +28,3 @@ extern "C"
 		return init_obj.init();
 	}
 }
-#endif

@@ -10,5 +10,5 @@ src/gen/**
 *.os
 compile_commands.json
 
-# ignore my local symlink
+# ignore my local symlink/copy
 godot-cpp

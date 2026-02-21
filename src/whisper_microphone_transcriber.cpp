@@ -1,6 +1,5 @@
 #include "whisper_microphone_transcriber.h"
 
-#ifdef _GDEXTENSION
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/variant/callable.hpp>
@@ -8,21 +7,13 @@
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/audio_server.hpp>
 using namespace godot;
-#else
-#include "core/string/print_string.h"
-#include "core/config/engine.h"
-#include "core/os/os.h"
-#include "servers/audio/audio_server.h"
-#endif
 
 /* --- WhisperMicrophoneTranscriber implementation --- */
 
 WhisperMicrophoneTranscriber::WhisperMicrophoneTranscriber() {
 	bus_name = "WhisperMicCapture_" + String::num_int64((int64_t)this);
-#ifdef _GDEXTENSION
 	mtx.instantiate();
 	sem.instantiate();
-#endif
 }
 
 WhisperMicrophoneTranscriber::~WhisperMicrophoneTranscriber() {
@@ -49,10 +40,8 @@ void WhisperMicrophoneTranscriber::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("push_audio_chunk", "samples"), &WhisperMicrophoneTranscriber::push_audio_chunk);
 
-#ifdef _GDEXTENSION
 	// internal thread function (must be callable for GDExtension Thread)
 	ClassDB::bind_method(D_METHOD("_thread_func"), &WhisperMicrophoneTranscriber::_thread_func);
-#endif
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "whisper", PROPERTY_HINT_RESOURCE_TYPE, "WhisperFull"), "set_whisper", "get_whisper");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "step_ms", PROPERTY_HINT_RANGE, "500,10000,100"), "set_step_ms", "get_step_ms");
@@ -191,18 +180,13 @@ bool WhisperMicrophoneTranscriber::start() {
 
 	// clear buffers
 	{
-#ifdef _GDEXTENSION
 		mtx->lock();
-#else
-		MutexLock<Mutex> lock(mtx);
-#endif
+
 		pcmf32_buffer.clear();
 		pcmf32_old.clear();
 		pending_texts.clear();
 		pending_segments.clear();
-#ifdef _GDEXTENSION
 		mtx->unlock();
-#endif
 	}
 
 	accumulated_time = 0.0f;
@@ -211,12 +195,8 @@ bool WhisperMicrophoneTranscriber::start() {
 	should_stop.clear();
 	running.set();
 
-#ifdef _GDEXTENSION
 	worker_thread.instantiate();
 	worker_thread->start(Callable(this, "_thread_func"));
-#else
-	worker_thread.start(_thread_callback, this);
-#endif
 
 	// enable internal process to emit results on main thread
 	set_process_internal(true);
@@ -231,18 +211,12 @@ void WhisperMicrophoneTranscriber::stop() {
 	}
 
 	should_stop.set();
-#ifdef _GDEXTENSION
+
 	sem->post(); // wake up thread if waiting
 	if (worker_thread.is_valid() && worker_thread->is_started()) {
 		worker_thread->wait_to_finish();
 	}
 	worker_thread.unref();
-#else
-	sem.post(); // wake up thread if waiting
-	if (worker_thread.is_started()) {
-		worker_thread.wait_to_finish();
-	}
-#endif
 
 	running.clear();
 	set_process_internal(false);
@@ -263,24 +237,12 @@ void WhisperMicrophoneTranscriber::push_audio_chunk(const PackedFloat32Array &p_
 		return;
 	}
 
-#ifdef _GDEXTENSION
 	mtx->lock();
 	pcmf32_buffer.append_array(p_samples);
 	mtx->unlock();
-#else
-	MutexLock<Mutex> lock(mtx);
-	pcmf32_buffer.append_array(p_samples);
-#endif
 }
 
 /* --- thread function --- */
-
-#ifndef _GDEXTENSION
-void WhisperMicrophoneTranscriber::_thread_callback(void *p_userdata) {
-	WhisperMicrophoneTranscriber *self = static_cast<WhisperMicrophoneTranscriber *>(p_userdata);
-	self->_thread_func();
-}
-#endif
 
 void WhisperMicrophoneTranscriber::_thread_func() {
 	const int whisper_sample_rate = 16000;
@@ -300,14 +262,9 @@ void WhisperMicrophoneTranscriber::_thread_func() {
 				PackedFloat32Array mono_data = WhisperFull::convert_stereo_to_mono_16khz(sample_rate, stereo_data);
 
 				if (!mono_data.is_empty()) {
-#ifdef _GDEXTENSION
 					mtx->lock();
 					pcmf32_buffer.append_array(mono_data);
 					mtx->unlock();
-#else
-					MutexLock<Mutex> lock(mtx);
-					pcmf32_buffer.append_array(mono_data);
-#endif
 				}
 			}
 		}
@@ -315,14 +272,9 @@ void WhisperMicrophoneTranscriber::_thread_func() {
 		// check if we have enough samples to process
 		bool should_process = false;
 		{
-#ifdef _GDEXTENSION
 			mtx->lock();
 			should_process = pcmf32_buffer.size() >= n_samples_step;
 			mtx->unlock();
-#else
-			MutexLock<Mutex> lock(mtx);
-			should_process = pcmf32_buffer.size() >= n_samples_step;
-#endif
 		}
 
 		if (should_process) {
@@ -345,16 +297,10 @@ void WhisperMicrophoneTranscriber::_process_audio() {
 
 	// get audio from buffer
 	{
-#ifdef _GDEXTENSION
 		mtx->lock();
-#else
-		MutexLock<Mutex> lock(mtx);
-#endif
 
 		if (pcmf32_buffer.size() < n_samples_step) {
-#ifdef _GDEXTENSION
 			mtx->unlock();
-#endif
 			return;
 		}
 
@@ -363,9 +309,7 @@ void WhisperMicrophoneTranscriber::_process_audio() {
 		pcmf32_buffer.clear();
 
 		pcmf32_old_copy = pcmf32_old;
-#ifdef _GDEXTENSION
 		mtx->unlock();
-#endif
 	}
 
 	// calculate how many old samples to keep (to mitigate word boundary issues)
@@ -394,14 +338,9 @@ void WhisperMicrophoneTranscriber::_process_audio() {
 
 	// save samples for next iteration
 	{
-#ifdef _GDEXTENSION
 		mtx->lock();
 		pcmf32_old = pcmf32;
 		mtx->unlock();
-#else
-		MutexLock<Mutex> lock(mtx);
-		pcmf32_old = pcmf32;
-#endif
 	}
 
 	// transcribe
@@ -416,11 +355,7 @@ void WhisperMicrophoneTranscriber::_process_audio() {
         //print_line(full_text);
 
 		// queue results to be emitted on main thread
-#ifdef _GDEXTENSION
 		mtx->lock();
-#else
-		MutexLock<Mutex> lock(mtx);
-#endif
 
 		if (!full_text.strip_edges().is_empty()) {
 			pending_texts.push_back(full_text);
@@ -432,9 +367,7 @@ void WhisperMicrophoneTranscriber::_process_audio() {
 				pending_segments.push_back(seg);
 			}
 		}
-#ifdef _GDEXTENSION
 		mtx->unlock();
-#endif
 	}
 }
 
@@ -445,20 +378,12 @@ void WhisperMicrophoneTranscriber::_emit_pending_results() {
 	LocalVector<Ref<WhisperSegment>> segments_to_emit;
 
 	{
-#ifdef _GDEXTENSION
 		mtx->lock();
 		texts_to_emit = pending_texts;
 		segments_to_emit = pending_segments;
 		pending_texts.clear();
 		pending_segments.clear();
 		mtx->unlock();
-#else
-		MutexLock<Mutex> lock(mtx);
-		texts_to_emit = pending_texts;
-		segments_to_emit = pending_segments;
-		pending_texts.clear();
-		pending_segments.clear();
-#endif
 	}
 
 	for (const String &text : texts_to_emit) {

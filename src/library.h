@@ -1,11 +1,6 @@
-#ifdef _GDEXTENSION
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/classes/resource_loader.hpp>
 using namespace godot;
-#else
-#include "modules/register_module_types.h"
-#include "core/io/resource_loader.h"
-#endif
 
 #include "whisper_model.h"
 #include "whisper_full.h"

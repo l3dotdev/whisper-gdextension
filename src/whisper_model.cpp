@@ -18,8 +18,6 @@ void WhisperModel::_bind_methods() {
 
 //
 
-#ifdef _GDEXTENSION
-
 Variant ResourceFormatLoaderWhisperModel::_load(const String &p_path, const String &p_original_path, bool p_use_sub_threads, int32_t p_cache_mode) const {
 	Ref<WhisperModel> model;
     model.instantiate();
@@ -42,34 +40,3 @@ String ResourceFormatLoaderWhisperModel::_get_resource_type(const String &p_path
 	}
 	return String();
 }
-
-#else
-
-Ref<Resource> ResourceFormatLoaderWhisperModel::load(
-    const String &p_path, const String &p_original_path, Error *r_error, bool p_use_sub_threads, float p_priority
-) {
-    Ref<WhisperModel> model;
-    model.instantiate();
-    model->set_bin_path(p_path);
-    if (r_error) {
-        *r_error = OK;
-    }
-    return model;
-}
-
-void ResourceFormatLoaderWhisperModel::get_recognized_extensions(List<String> *r_extensions) const {
-    r_extensions->push_back("bin");
-}
-
-bool ResourceFormatLoaderWhisperModel::handles_type(const String &p_type) const {
-    return ClassDB::is_parent_class(p_type, "WhisperModel");
-}
-
-String ResourceFormatLoaderWhisperModel::get_resource_type(const String &p_path) const {
-    if (p_path.get_extension().to_lower() == "bin") {
-		return "WhisperModel";
-	}
-	return String();
-}
-
-#endif
