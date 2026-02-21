@@ -1,0 +1,35 @@
+name: Bundle Addon
+
+on:
+    push:
+        branches: [master, main]
+    workflow_dispatch:
+
+jobs:
+    build_windows:
+        uses: l3dotdev-org/whisper-gdextension/.github/workflows/build_x_windows.yml@main
+    build_linux:
+        uses: l3dotdev-org/whisper-gdextension/.github/workflows/build_x_linux.yml@main
+    bundle:
+        runs-on: ubuntu-latest
+        needs: [build_windows, build_linux]
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v6
+
+            - name: Download artifacts
+              uses: actions/download-artifact@v5
+
+            - name: Move artifacts
+              run: |
+                  mkdir -p addon/bin/windows
+                  find . -name 'whisper.windows*' | xargs -0 mv -t addon/bin/windows
+                  mkdir -p addon/bin/linux
+                  find . -name 'libwhisper.linux*' | xargs -0 mv -t addon/bin/linux
+
+            - name: Upload artifact
+              uses: actions/upload-artifact@v6
+              with:
+                  name: whisper-gdextension
+                  path: addon
+                  if-no-files-found: error
