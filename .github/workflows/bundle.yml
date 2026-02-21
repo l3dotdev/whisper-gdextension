@@ -23,9 +23,9 @@ jobs:
             - name: Move artifacts
               run: |
                   mkdir -p addon/bin/windows
-                  find . -name 'whisper.windows*' | xargs -0 mv -t addon/bin/windows
+                  find . -maxdepth 2 -name 'whisper.windows*' -type f -print0 | xargs -0 mv -t addon/bin/windows
                   mkdir -p addon/bin/linux
-                  find . -name 'libwhisper.linux*' | xargs -0 mv -t addon/bin/linux
+                  find . -maxdepth 2 -name 'libwhisper.linux*' -type f -print0 | xargs -0 mv -t addon/bin/linux
 
             - name: Upload artifact
               uses: actions/upload-artifact@v6
