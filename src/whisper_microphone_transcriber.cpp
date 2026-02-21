@@ -34,7 +34,7 @@ void WhisperMicrophoneTranscriber::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_keep_ms", "keep_ms"), &WhisperMicrophoneTranscriber::set_keep_ms);
 	ClassDB::bind_method(D_METHOD("get_keep_ms"), &WhisperMicrophoneTranscriber::get_keep_ms);
 
-	ClassDB::bind_method(D_METHOD("reset_bus_name", "keep_ms"), &WhisperMicrophoneTranscriber::reset_bus_name);
+	ClassDB::bind_method(D_METHOD("reset_bus_name"), &WhisperMicrophoneTranscriber::reset_bus_name);
 	ClassDB::bind_method(D_METHOD("set_bus_name", "bus_name"), &WhisperMicrophoneTranscriber::set_bus_name);
 	ClassDB::bind_method(D_METHOD("get_bus_name"), &WhisperMicrophoneTranscriber::get_bus_name);
 

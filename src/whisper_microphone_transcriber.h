@@ -82,15 +82,15 @@ public:
 	void set_keep_ms(int p_keep_ms);
 	int get_keep_ms() const;
 
-	void reset_bus_name();
 	void set_bus_name(const String &p_bus_name);
 	String get_bus_name() const;
-
+	
 	// control methods
 	bool start();
 	void stop();
 	bool is_running() const;
-
+	void reset_bus_name();
+	
 	// manual audio input (alternative to microphone)
 	void push_audio_chunk(const PackedFloat32Array &p_samples);
 
