@@ -69,3 +69,4 @@ jobs:
                   name: whisper-windows-${{ matrix.target }}-${{ matrix.arch }}
                   path: addon/bin/windows/
                   if-no-files-found: error
+                  retention-days: 1

@@ -53,3 +53,4 @@ jobs:
                   name: whisper-linux-${{ matrix.target }}-${{ matrix.arch }}
                   path: addon/bin/linux/
                   if-no-files-found: error
+                  retention-days: 1
